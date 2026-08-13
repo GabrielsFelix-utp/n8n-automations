@@ -1,0 +1,1636 @@
+{
+  "name": "Sintetizador de Pesquisa",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -2512,
+        1040
+      ],
+      "id": "ade64572-27b5-4206-b3f1-5022859ff37e",
+      "name": "MensagemRecebida",
+      "webhookId": "185df7b4-9044-4ab9-b974-52344d2c2053",
+      "credentials": {
+        "telegramApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e924aadd-b86d-4759-a8ee-2237ed715080",
+              "leftValue": "={{ $json.message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2288,
+        1040
+      ],
+      "id": "94fe1eed-8b01-41a5-bf1e-24c7b734517d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2064,
+        944
+      ],
+      "id": "9cb6d102-2a0a-4711-90d4-8738a657822c",
+      "name": "BaixarAudio",
+      "webhookId": "87341808-f795-4b1e-ba42-48b88291e5d0",
+      "credentials": {
+        "telegramApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -1840,
+        944
+      ],
+      "id": "41a69101-ef90-4370-8fd0-c297cb7b955c",
+      "name": "TranscreverAudio",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b921f6a1-0d31-417c-8034-fc1b21800ad7",
+              "name": "texto",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "fe4753d4-014a-44c5-93b6-ad053d3e088a",
+              "name": "chat_id",
+              "value": "={{ $('MensagemRecebida').item.json.message.chat.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1616,
+        944
+      ],
+      "id": "fde93bea-23c8-4f9d-b5ea-a14c0b840950",
+      "name": "DadosAudio"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b921f6a1-0d31-417c-8034-fc1b21800ad7",
+              "name": "texto",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "fe4753d4-014a-44c5-93b6-ad053d3e088a",
+              "name": "chat_id",
+              "value": "={{ $('MensagemRecebida').item.json.message.chat.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1616,
+        1136
+      ],
+      "id": "95774617-6630-4447-ae7a-1966daa7350a",
+      "name": "DadosChat"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1392,
+        1040
+      ],
+      "id": "8c6911a7-5370-4bf8-b912-194008205838",
+      "name": "DadosFinais"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.texto }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "tema",
+              "description": "O tema principal do conteúdo em poucas palavras.",
+              "required": true
+            },
+            {
+              "name": "plataformas",
+              "description": "Liste, separadas por vírgula e em minúsculas, todas as plataformas mencionadas no áudio para as quais o conteúdo deve ser criado. Valores possíveis: linkedin, instagram, twitter, newsletter, video (ou youtube/reels/shorts). Se o usuário não especificar nenhuma plataforma, retorne exatamente \"todas\".",
+              "required": true
+            },
+            {
+              "name": "tom",
+              "description": "Tom desejado. Didático, descritivo, técnico, inspiracional e etc.",
+              "required": true
+            },
+            {
+              "name": "publico_alvo",
+              "description": "Público alvo do conteúdo. Se não especificado, in inferir do tema.",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -1168,
+        1040
+      ],
+      "id": "fa00661b-35fd-44d9-80c4-f07d5b6816b1",
+      "name": "ExtrairDados"
+    },
+    {
+      "parameters": {
+        "query": "={{ $json.output.tema }}",
+        "options": {
+          "topic": "news",
+          "search_depth": "advanced",
+          "max_results": 5,
+          "days": 3,
+          "include_answer": "advanced",
+          "include_domains": []
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavily",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        1040
+      ],
+      "id": "abb4d9cd-dad0-450a-ac27-ffcf43177c72",
+      "name": "Search",
+      "credentials": {
+        "tavilyApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 4000,
+        "chunkOverlap": 2000,
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "summarizationMethod": "stuff",
+              "prompt": "Você é um pesquisador. Sintetize os principais insights e dados da pesquisa \nabaixo em 5-7 bullets curtos em PT-BR. Foque em tendências, dados concretos, \nângulos interessantes. \n\nPesquisa: \n\"{text}\" \n\nINSIGHTS:"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2.1,
+      "position": [
+        -592,
+        1040
+      ],
+      "id": "d1943175-531f-40e0-aae0-130ad51125f0",
+      "name": "SintetizarPesquisa"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"estrategia_geral\": \"Estratégia geral\",\n  \"angulo_unico\": \"Ângulo único\",\n  \"tom_geral\": \"Tom geral\",\n  \"video\": {\n    \"formato\": \"reels_shorts\",\n    \"justificativa\": \"Justificativa\"\n  },\n  \"linkedin\": {\n    \"formato\": \"carrossel_pdf\",\n    \"justificativa\": \"Justificativa\"\n  },\n  \"instagram\": {\n    \"formato\": \"carrossel\",\n    \"justificativa\": \"Justificativa\"\n  },\n  \"twitter\": {\n    \"formato\": \"thread\",\n    \"justificativa\": \"Justificativa\"\n  },\n  \"newsletter\": {\n    \"formato\": \"normal\",\n    \"justificativa\": \"Justificativa\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        1264
+      ],
+      "id": "2cfa66f3-65b8-48b2-ab35-e9e42fde8d4c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Briefing\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}\nTom: {{ $('ExtrairDados').item.json.output.tom }}\nPlataforma: {{ $('ExtrairDados').item.json.output.plataformas }}\n\nPesquisa:\n{{ $json.output.text }}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o Diretor Criativo de uma agência de conteúdo especializada em tecnologia e inteligência artificial.\n\nReceba um briefing e uma pesquisa já sintetizada.\n\nSua missão é definir uma estratégia editorial única que será seguida por todos os redatores.\n\nConsidere:\n\n- Tema\n- Público-alvo\n- Plataforma\n- Tendências atuais\n- Nível de profundidade\n- Potencial de compartilhamento\n- Clareza da mensagem\n\nEscolha o melhor formato para cada plataforma.\n\nValores permitidos:\n\nVideo:\n- youtube_longo\n- reels_shorts\n\nLinkedIn:\n- post_texto\n- carrossel_pdf\n\nInstagram:\n- carrossel\n- stories\n- post_estatico\n\nTwitter:\n- thread\n\nNewsletter:\n- normal\n- breaking_curto\n\nAlém disso defina:\n\n- estrategia_geral\n- angulo_unico\n- tom_geral\n\nCada justificativa deve possuir apenas uma frase.\n\nIMPORTANTE:\n\nRetorne EXCLUSIVAMENTE um objeto JSON válido.\n\nA estrutura obrigatória é:\n\n{\n  \"estrategia_geral\": \"texto\",\n  \"angulo_unico\": \"texto\",\n  \"tom_geral\": \"texto\",\n  \"video\": {\n    \"formato\": \"youtube_longo ou reels_shorts\",\n    \"justificativa\": \"uma frase\"\n  },\n  \"linkedin\": {\n    \"formato\": \"post_texto ou carrossel_pdf\",\n    \"justificativa\": \"uma frase\"\n  },\n  \"instagram\": {\n    \"formato\": \"carrossel, stories ou post_estatico\",\n    \"justificativa\": \"uma frase\"\n  },\n  \"twitter\": {\n    \"formato\": \"thread\",\n    \"justificativa\": \"uma frase\"\n  },\n  \"newsletter\": {\n    \"formato\": \"normal ou breaking_curto\",\n    \"justificativa\": \"uma frase\"\n  }\n}\n\nNão utilize Markdown.\nNão utilize blocos de código.\nNão adicione campos.\nNão remova campos.\nNão escreva comentários ou explicações.\nNão escreva nada antes ou depois do JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -240,
+        1040
+      ],
+      "id": "ed3e45f5-a441-4476-941a-0472e56caad5",
+      "name": "DiretorCriativo"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=FORMATO ESCOLHIDO: {{ $('DiretorCriativo').item.json.output.video.formato }}\nJUSTIFICATIVA: {{ $('DiretorCriativo').item.json.output.video.justificativa }}\n\nDIREÇÃO DO DIRETOR:\n- Estratégia Geral: {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n- Ângulo Único: {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n- Tom Geral: {{ $('DiretorCriativo').item.json.output.tom_geral }}\n\nINSIGHTS: {{ $('SintetizarPesquisa').item.json.output.text }}\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico-Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um roteirista profissional especializado em vídeos para redes sociais.\n\nCrie um roteiro utilizando o FORMATO ESCOLHIDO, o TEMA, o PÚBLICO-ALVO e as informações fornecidas pelo Diretor Criativo.\n\nSe o formato for \"reels_shorts\":\n- duração de 30 a 60 segundos\n- hook forte nos primeiros 3 segundos\n- frases curtas\n- CTA no final\n- utilize [CORTE], [B-ROLL] e [TEXTO NA TELA] quando fizer sentido\n\nSe o formato for \"youtube_longo\":\n- duração de 8 a 12 minutos\n- hook inicial\n- introdução\n- desenvolvimento\n- conclusão\n- CTA\n- Utilizar timestamps quando fizer sentido\n\nNão invente informações.\n\nO campo \"formato\" deve ser exatamente igual ao FORMATO ESCOLHIDO.\n\nRetorne somente o objeto JSON solicitado pelo Structured Output Parser.\nNão escreva texto antes ou depois do JSON.\n\nREGRAS DE CONTEÚDO:\n\n- Utilize as informações fornecidas no briefing, na pesquisa e pelo Diretor Criativo.\n- Não invente dados, estatísticas ou fatos.\n- Mantenha a estratégia definida pelo Diretor Criativo.\n- Respeite o ângulo único definido pelo Diretor.\n- Respeite o tom geral definido pelo Diretor.\n- Adapte a linguagem ao público-alvo.\n- O roteiro deve ser natural e adequado para fala."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        336,
+        128
+      ],
+      "id": "3f9977bb-6b4a-4273-97fe-f13245bfb682",
+      "name": "RedatorVideo"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"formato\": \"reels_shorts\",\n  \"titulo\": \"Título do roteiro\",\n  \"conteudo_markdown\": \"Roteiro completo.\",\n  \"notas_estrategicas\": \"Breve explicação de como o roteiro aplica a estratégia definida pelo Diretor Criativo.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        368
+      ],
+      "id": "cd559d36-4b55-49f6-a580-9055b94069d6",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=FORMATO ESCOLHIDO: {{ $('DiretorCriativo').item.json.output.linkedin.formato }}\nJUSTIFICATIVA: {{ $('DiretorCriativo').item.json.output.linkedin.justificativa }}\n\nDIREÇÃO DO DIRETOR:\n- Estratégia Geral: {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n- Ângulo Único: {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n- Tom Geral: {{ $('DiretorCriativo').item.json.output.tom_geral }}\n\nINSIGHTS: {{ $('SintetizarPesquisa').item.json.output.text }}\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico-Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um especialista em criação de conteúdo para LinkedIn.\n\nTransforme a estratégia definida pelo Diretor Criativo em conteúdo pronto para publicação.\n\nSiga obrigatoriamente o FORMATO ESCOLHIDO.\n\nSe o formato for \"post_texto\":\n- 200 a 300 palavras\n- Hook forte na primeira frase\n- Story ou contexto\n- Insight ou lição\n- 3 a 5 pontos quando fizer sentido\n- CTA em forma de pergunta\n- Quebras de linha para facilitar a leitura\n- 3 a 5 hashtags no final\n\nSe o formato for \"carrossel_pdf\":\n- Criar 8 a 10 slides em Markdown\n- Slide 1: capa com título impactante e subtítulo\n- Slides seguintes: uma ideia principal por slide\n- Cada slide deve possuir título curto e texto objetivo\n- Slide final: CTA para salvar, compartilhar ou comentar\n- Incluir a legenda do post no final, com aproximadamente 150 palavras\n\nREGRAS DE CONTEÚDO:\n- Utilize as informações fornecidas no briefing, pesquisa e direção do Diretor Criativo.\n- Não invente dados, estatísticas ou fatos.\n- Respeite a estratégia, o ângulo e o tom definidos pelo Diretor.\n- Adapte a linguagem ao público-alvo.\n- Priorize clareza, valor prático e legibilidade.\n\nO conteúdo deve estar pronto para publicação no LinkedIn."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        336,
+        528
+      ],
+      "id": "07804b6b-9701-401f-8127-c0da35c57e87",
+      "name": "RedatorLinkedin"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=FORMATO ESCOLHIDO: {{ $('DiretorCriativo').item.json.output.instagram.formato }}\nJUSTIFICATIVA: {{ $('DiretorCriativo').item.json.output.instagram.justificativa }}\n\nDIREÇÃO DO DIRETOR:\n- Estratégia Geral: {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n- Ângulo Único: {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n- Tom Geral: {{ $('DiretorCriativo').item.json.output.tom_geral }}\n\nINSIGHTS: {{ $('SintetizarPesquisa').item.json.output.text }}\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico-Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um especialista em conteúdo criativo para Instagram, com foco em educação, tecnologia e inteligência artificial.\n\nTransforme a estratégia definida pelo Diretor Criativo em conteúdo visual, envolvente e pronto para publicação.\n\nSiga obrigatoriamente o FORMATO ESCOLHIDO.\n\nSE o formato for \"carrossel\":\n\n- Criar de 6 a 8 slides.\n- Slide 1: capa com até 6 palavras e subtítulo.\n- Os primeiros slides devem gerar curiosidade e deixar claro por que o conteúdo importa.\n- Slides intermediários devem desenvolver a ideia de forma didática e progressiva.\n- Cada slide deve apresentar uma ideia principal.\n- Usar títulos curtos e memoráveis.\n- Corpo de cada slide: até aproximadamente 30 palavras.\n- Utilizar exemplos, contrastes ou perguntas quando ajudarem na compreensão.\n- Evitar transformar todos os slides em listas.\n- Criar ritmo entre os slides para incentivar a pessoa a continuar deslizando.\n- Último slide: CTA coerente com o conteúdo.\n- No final, incluir legenda de aproximadamente 150 palavras e hashtags.\n\nSE o formato for \"stories\":\n\n- Criar de 5 a 8 cards.\n- Cada card deve conter no máximo 15 palavras.\n- Utilizar linguagem mais informal e direta que no carrossel.\n- Alternar formatos quando fizer sentido: enquete, caixa de pergunta, contagem regressiva, texto puro ou sticker de música.\n- Priorizar interação e resposta do público.\n- Cada card deve conduzir naturalmente ao próximo.\n\nSE o formato for \"post_estatico\":\n\n- Criar descrição da imagem.\n- Definir composição visual, elementos principais, cores e mood de forma objetiva.\n- Criar legenda de aproximadamente 250 palavras.\n- Incluir CTA e comentário fixado.\n- A descrição visual deve complementar a mensagem da legenda.\n\nDIREÇÃO CRIATIVA:\n\n- Crie conteúdo que desperte curiosidade sem utilizar clickbait vazio.\n- Prefira uma narrativa com começo, desenvolvimento e conclusão.\n- Use perguntas, contrastes, exemplos e quebra de expectativa quando forem adequados ao tema.\n- Evite clichês e frases genéricas de marketing.\n- Priorize linguagem humana e natural.\n- O conteúdo deve parecer criado para Instagram, e não apenas um texto adaptado de outra plataforma.\n\nREGRAS DE CONTEÚDO:\n\n- Utilize as informações fornecidas no briefing, pesquisa e direção do Diretor Criativo.\n- Não invente dados, estatísticas ou fatos.\n- Respeite a estratégia, o ângulo e o tom definidos pelo Diretor.\n- Adapte o conteúdo ao público-alvo.\n- Priorize clareza, criatividade e valor prático.\n\nSAÍDA:\n- Retorne somente os campos definidos pelo Output Parser.\n- Mantenha exatamente os nomes: formato, titulo, conteudo_markdown e notas_estrategicas.\n- \"formato\" deve corresponder ao formato escolhido pelo Diretor.\n- \"conteudo_markdown\" deve conter todo o conteúdo criado.\n- Não adicione ou omita campos."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        336,
+        928
+      ],
+      "id": "6e8e917a-253d-4943-85dc-1c28e8b47ba4",
+      "name": "RedatorInstagram"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=FORMATO ESCOLHIDO: {{ $('DiretorCriativo').item.json.output.twitter.formato }}\nJUSTIFICATIVA: {{ $('DiretorCriativo').item.json.output.twitter.justificativa }}\n\nDIREÇÃO DO DIRETOR:\n- Estratégia Geral: {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n- Ângulo Único: {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n- Tom Geral: {{ $('DiretorCriativo').item.json.output.tom_geral }}\n\nINSIGHTS: {{ $('SintetizarPesquisa').item.json.output.text }}\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico-Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um copywriter especializado em Twitter/X.\n\nCrie conteúdo com base no briefing, pesquisa e direção do Diretor Criativo.\n\nO formato escolhido pelo Diretor é \"thread\".\n\nCrie uma thread com 8 a 10 tweets.\n\nREGRAS:\n- Cada tweet deve ter no máximo 280 caracteres.\n- Tweet 1 deve ser um hook forte.\n- Tweets seguintes devem desenvolver a ideia com informações, exemplos e insights do briefing.\n- Os tweets devem formar uma sequência lógica.\n- Não repetir ideias.\n- O último tweet deve conter um CTA.\n- Não inventar dados ou informações.\n- Respeitar o ângulo, estratégia e tom definidos pelo Diretor.\n\nFORMATO DO CONTEÚDO:\nTweet 1: texto\nTweet 2: texto\nTweet 3: texto\ne assim por diante.\n\nSAÍDA:\nRetorne somente JSON válido.\nNão utilize ```json ou qualquer texto fora do JSON.\nRetorne exatamente estes quatro campos:\nformato, titulo, conteudo_markdown, notas_estrategicas.\n\nO campo \"formato\" deve ser \"thread\".\nTodo o conteúdo da thread deve estar dentro de \"conteudo_markdown\"."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        336,
+        1328
+      ],
+      "id": "cc01ea9e-f99b-4608-aa47-80d0cc2fad46",
+      "name": "RedatorTwitter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=FORMATO ESCOLHIDO: {{ $('DiretorCriativo').item.json.output.newsletter.formato }}\nJUSTIFICATIVA: {{ $('DiretorCriativo').item.json.output.newsletter.justificativa }}\n\nDIREÇÃO DO DIRETOR:\n- Estratégia Geral: {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n- Ângulo Único: {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n- Tom Geral: {{ $('DiretorCriativo').item.json.output.tom_geral }}\n\nINSIGHTS: {{ $('SintetizarPesquisa').item.json.output.text }}\n\nTema: {{ $('ExtrairDados').item.json.output.tema }}\nPúblico-Alvo: {{ $('ExtrairDados').item.json.output.publico_alvo }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um editor profissional de newsletters.\n\nTransforme a estratégia definida pelo Diretor Criativo em uma newsletter clara, relevante e pronta para publicação.\n\nSiga obrigatoriamente o FORMATO ESCOLHIDO.\n\nSE o formato for \"normal\":\n\n- Criar uma newsletter de aproximadamente 400 a 600 palavras.\n- Começar com um assunto impactante.\n- Criar uma introdução com gancho.\n- Desenvolver o tema em 2 ou 3 seções com subtítulos.\n- Apresentar informações, exemplos ou dados relevantes quando disponíveis.\n- Criar um TAKEAWAY de uma frase.\n- Finalizar com um CTA.\n- Utilizar Markdown.\n- Tom direto, opinativo e informativo.\n\nSE o formato for \"breaking_curto\":\n\n- Criar conteúdo de no máximo 150 palavras.\n- Assunto deve transmitir urgência e utilizar \"BREAKING\" ou \"ALERTA\" quando adequado.\n- Criar um parágrafo apresentando o fato.\n- Criar um parágrafo explicando o impacto.\n- Finalizar com uma frase indicando o próximo passo.\n- Utilizar tom urgente, direto e jornalístico.\n\nREGRAS DE CONTEÚDO:\n\n- Utilize as informações fornecidas no briefing, pesquisa e direção do Diretor Criativo.\n- Não invente dados, estatísticas ou fatos.\n- Quando dados forem mencionados, utilize apenas informações disponíveis nas fontes fornecidas.\n- Respeite a estratégia, o ângulo e o tom definidos pelo Diretor.\n- Adapte a linguagem ao público-alvo.\n- Priorize clareza, relevância e valor para o leitor.\n- Evite introduções genéricas e excesso de palavras."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        336,
+        1840
+      ],
+      "id": "d59a31a2-780c-4669-9f14-602ad7250eca",
+      "name": "RedatorNewsletter"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $now.format('yyyy-MM-dd') }} - {{ $('ExtrairDados').item.json.output.tema }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1P5OOxMHIB-RzqM_2R6pwctvl9nTTS456",
+          "mode": "list",
+          "cachedResultName": "N8n - Camisa 10",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1P5OOxMHIB-RzqM_2R6pwctvl9nTTS456"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        112,
+        1040
+      ],
+      "id": "e9870a56-8868-4c51-8e00-7147cbc20b8c",
+      "name": "CriarPasta",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"formato\": \"formato_escolhido\",\n  \"titulo\": \"Título\",\n  \"conteudo_markdown\": \"Conteúdo do LinkedIn.\",\n  \"notas_estrategicas\": \"Notas estratégicas.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        768
+      ],
+      "id": "364d75e2-361d-4295-ac1a-af6011765192",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "=# {{ $json.output.titulo }}\n\n**Formato escolhido:** {{ $json.output.formato }}\n**Notas estratégicas:** {{ $json.output.notas_estrategicas }}\n\n---\n\n\n{{ $json.output.conteudo_markdown }}",
+        "name": "=Roteiro do Projeto ({{ $json.output.formato }}) - {{ $now.format('dd/MM/yyyy') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('CriarPasta').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        688,
+        240
+      ],
+      "id": "2313a076-cc00-4067-bae7-11a9520b0ee1",
+      "name": "DriveVideo",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "=# {{ $json.output.titulo }}\n\n**Formato escolhido:** {{ $json.output.formato }}\n**Notas estratégicas:** {{ $json.output.notas_estrategicas }}\n\n---\n\n\n{{ $json.output.conteudo_markdown }}",
+        "name": "=Roteiro do Post LinkedIn ({{ $json.output.formato }}) - {{ $now.format('dd/MM/yyyy') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('CriarPasta').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        688,
+        640
+      ],
+      "id": "5de7932a-fd3e-4a50-97be-80d4a7deb232",
+      "name": "DriveLinkedIn",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"formato\": \"formato_escolhido\",\n  \"titulo\": \"Título\",\n  \"conteudo_markdown\": \"Conteúdo do Instagram.\",\n  \"notas_estrategicas\": \"Notas estratégicas.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        1168
+      ],
+      "id": "2761cf7c-ae37-4d18-8d1b-1b4b309fe8cc",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "=# {{ $json.output.titulo }}\n\n**Formato escolhido:** {{ $json.output.formato }}\n**Notas estratégicas:** {{ $json.output.notas_estrategicas }}\n\n---\n\n\n{{ $json.output.conteudo_markdown }}",
+        "name": "=Roteiro do Post Instagram ({{ $json.output.formato }}) - {{ $now.format('dd/MM/yyyy') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('CriarPasta').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        688,
+        1040
+      ],
+      "id": "a4652e0a-d80a-49e3-8a75-0742eb38d4d2",
+      "name": "DriveInstagram",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"formato\": \"thread\",\n  \"titulo\": \"Título\",\n  \"conteudo_markdown\": \"Conteúdo da thread.\",\n  \"notas_estrategicas\": \"Notas estratégicas.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        1568
+      ],
+      "id": "cb626468-78e7-4df6-970d-359ba3f10eee",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "=# {{ $json.output.titulo }}\n\n**Formato escolhido:** {{ $json.output.formato }}\n**Notas estratégicas:** {{ $json.output.notas_estrategicas }}\n\n---\n\n\n{{ $json.output.conteudo_markdown }}",
+        "name": "=Roteiro do Post Twitter ({{ $json.output.formato }}) - {{ $now.format('dd/MM/yyyy') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('CriarPasta').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        688,
+        1440
+      ],
+      "id": "edd8c0d2-fc36-4cf9-9550-d72a123beaf8",
+      "name": "DriveTwitter",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"formato\": \"normal\",\n  \"titulo\": \"Assunto\",\n  \"conteudo_markdown\": \"Conteúdo da newsletter.\",\n  \"notas_estrategicas\": \"Notas.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        2064
+      ],
+      "id": "a2629ee0-3e69-4a83-843d-8605da891db8",
+      "name": "Structured Output Parser5"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "=# {{ $json.output.titulo }}\n\n**Formato escolhido:** {{ $json.output.formato }}\n**Notas estratégicas:** {{ $json.output.notas_estrategicas }}\n\n---\n\n\n{{ $json.output.conteudo_markdown }}",
+        "name": "=Roteiro do Post Newsletter ({{ $json.output.formato }}) - {{ $now.format('dd/MM/yyyy') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('CriarPasta').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        688,
+        1840
+      ],
+      "id": "971ddb80-6b20-4086-8cf5-2fccbb47e27e",
+      "name": "DriveNewsletter",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "maxTokens": 8192
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        1424
+      ],
+      "id": "349b2d99-06f6-42e5-89c1-132a5f767aab",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2565980c-4356-44e6-85c9-c3fccf0231a2",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "todas",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "fd94fcd3-4308-401f-9f07-1f8bd95ef4d5",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "video",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "fefe18f7-0a65-45f9-b9e5-0a8ec2b84952",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "youtube",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "4fc3ecfb-1fec-4a90-96a6-5d9aaa4d5a7a",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "reels",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "df391800-fb09-42db-a1cb-a5fbd53db957",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "shorts",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        128
+      ],
+      "id": "0df9e3a7-9bd4-42a5-aac1-ff3cb94081d0",
+      "name": "FiltroVideo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab853df4-211a-4a6c-b7be-8f0ae93d97d0",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "todas",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "d24c1cc6-f9f3-45c9-9313-0edf3bcaeeb3",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "linkedin",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        528
+      ],
+      "id": "f037b3e5-fb53-4f05-8824-e299b0375b8b",
+      "name": "FiltroLinkedin"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "11d0b6d2-6431-41ff-b1ab-5040ab76c3fa",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "todas",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "e037a7ae-e169-495c-b315-ad088a0b5bc7",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "instagram",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        928
+      ],
+      "id": "dc7a77e0-48e8-4a83-af86-48f79ab9fb1f",
+      "name": "FiltroInstagram"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b005505b-491c-4e8c-ab78-acc75126a58b",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "todas",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "ce76a237-a8db-4df1-937e-034ce3af7022",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "twitter",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        1328
+      ],
+      "id": "cdb23c45-ea1d-487d-bd50-92600a1e26a0",
+      "name": "FiltroTwitter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4368df41-429c-4971-8804-134ea8571f98",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "todas",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "7c20429b-0a35-4c1f-8d99-ec71408528a2",
+              "leftValue": "={{ $('ExtrairDados').item.json.output.plataformas }}",
+              "rightValue": "newsletter",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        1840
+      ],
+      "id": "a68b0422-f719-4cdf-a591-63732fca672c",
+      "name": "FiltroNewsletter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "95f57793-61c7-42fd-bf0d-850017ca3f89",
+              "name": "mensagem",
+              "value": "=✅ *Conteúdo pronto!*\n\n📱 *Plataforma:* Vídeo\n🗂 *Formato:* {{ $('DiretorCriativo').item.json.output.video.formato }}\n💡 *Por quê esse formato:* {{ $('DiretorCriativo').item.json.output.video.justificativa }}\n\n🎯 *Estratégia geral:* {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n📐 *Ângulo único:* {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n\n🔗 *Roteiro completo:* {{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        128
+      ],
+      "id": "1507b238-ea28-45dc-a573-d8ed374d6a76",
+      "name": "MontarRespostaVideo"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac9bce93-92e7-4ca7-9ed0-05bbb6cdef2d",
+              "name": "mensagem",
+              "value": "=✅ *Conteúdo pronto!*\n\n📱 *Plataforma:* LinkedIn\n🗂 *Formato:* {{ $('DiretorCriativo').item.json.output.linkedin.formato }}\n💡 *Por quê esse formato:* {{ $('DiretorCriativo').item.json.output.linkedin.justificativa }}\n\n🎯 *Estratégia geral:* {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n📐 *Ângulo único:* {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n\n🔗 *Roteiro completo:* {{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        528
+      ],
+      "id": "bf62dfe3-48b4-469d-afc7-f24ccbdd883c",
+      "name": "MontarRespostaLinkedin"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00e634f9-d358-4516-99a1-689db5be6411",
+              "name": "mensagem",
+              "value": "=✅ *Conteúdo pronto!*\n\n📱 *Plataforma:* Instagram\n🗂 *Formato:* {{ $('DiretorCriativo').item.json.output.instagram.formato }}\n💡 *Por quê esse formato:* {{ $('DiretorCriativo').item.json.output.instagram.justificativa }}\n\n🎯 *Estratégia geral:* {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n📐 *Ângulo único:* {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n\n🔗 *Roteiro completo:* {{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        928
+      ],
+      "id": "0e0a678c-94f8-490c-a62e-53d24518f9f9",
+      "name": "MontarRespostaInstagram"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3bf53b32-d52b-490e-bca0-b67aaeaccae2",
+              "name": "mensagem",
+              "value": "=✅ *Conteúdo pronto!*\n\n📱 *Plataforma:* Twitter\n🗂 *Formato:* {{ $('DiretorCriativo').item.json.output.twitter.formato }}\n💡 *Por quê esse formato:* {{ $('DiretorCriativo').item.json.output.twitter.justificativa }}\n\n🎯 *Estratégia geral:* {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n📐 *Ângulo único:* {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n\n🔗 *Roteiro completo:* {{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        1328
+      ],
+      "id": "364cf918-92c1-44d7-ab4e-3c76c9fe79e7",
+      "name": "MontarRespostaTwitter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d1ac835-d84a-4815-8f16-08762671ed0a",
+              "name": "mensagem",
+              "value": "=✅ *Conteúdo pronto!*\n\n📱 *Plataforma:* Newsletter\n🗂 *Formato:* {{ $('DiretorCriativo').item.json.output.newsletter.formato }}\n💡 *Por quê esse formato:* {{ $('DiretorCriativo').item.json.output.newsletter.justificativa }}\n\n🎯 *Estratégia geral:* {{ $('DiretorCriativo').item.json.output.estrategia_geral }}\n📐 *Ângulo único:* {{ $('DiretorCriativo').item.json.output.angulo_unico }}\n\n🔗 *Roteiro completo:* {{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        1840
+      ],
+      "id": "a7619312-554e-42e7-9ab5-ec11f5499898",
+      "name": "MontarRespostaNewsletter"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('DadosFinais').item.json.chat_id }}",
+        "text": "={{ $json.mensagem }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        1040
+      ],
+      "id": "3bc53812-032e-4211-95d9-53ee59cdd272",
+      "name": "Resposta",
+      "webhookId": "53a05b58-3d5e-4ac5-93c7-f6c716ca65dc",
+      "credentials": {
+        "telegramApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "DiretorCriativo": [
+      {
+        "json": {
+          "output": {
+            "estrategia_geral": "Posicionar a agência como a principal fonte de conhecimento sobre o futuro da odontologia, antecipando tendências e fornecendo insights práticos para dentistas.",
+            "angulo_unico": "O roadmap do futuro odontológico: como as inovações de 2026 transformarão a prática e a carreira dos dentistas.",
+            "tom_geral": "Inspirador e informativo, com foco em oportunidades e preparação para o futuro.",
+            "video": {
+              "formato": "youtube_longo",
+              "justificativa": "Permite explorar em profundidade as inovações e tendências, utilizando recursos visuais para demonstrar tecnologias."
+            },
+            "linkedin": {
+              "formato": "carrossel_pdf",
+              "justificativa": "Ideal para apresentar dados e insights de forma visual e profissional, incentivando o download e aprofundamento."
+            },
+            "instagram": {
+              "formato": "carrossel",
+              "justificativa": "Oferece um formato dinâmico para destacar pontos-chave e dicas visuais sobre as tendências, com um bom engajamento."
+            },
+            "twitter": {
+              "formato": "thread",
+              "justificativa": "Permite desdobrar o tema em uma sequência lógica de tweets, gerando discussão e alcançando um público amplo de profissionais."
+            },
+            "newsletter": {
+              "formato": "normal",
+              "justificativa": "Fornece um resumo completo das principais tendências e inovações, com links para conteúdos mais aprofundados."
+            }
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "MensagemRecebida": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "BaixarAudio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DadosChat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BaixarAudio": {
+      "main": [
+        [
+          {
+            "node": "TranscreverAudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TranscreverAudio": {
+      "main": [
+        [
+          {
+            "node": "DadosAudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DadosAudio": {
+      "main": [
+        [
+          {
+            "node": "DadosFinais",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DadosChat": {
+      "main": [
+        [
+          {
+            "node": "DadosFinais",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "DadosFinais": {
+      "main": [
+        [
+          {
+            "node": "ExtrairDados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ExtrairDados": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search": {
+      "main": [
+        [
+          {
+            "node": "SintetizarPesquisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SintetizarPesquisa": {
+      "main": [
+        [
+          {
+            "node": "DiretorCriativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "DiretorCriativo",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DiretorCriativo": {
+      "main": [
+        [
+          {
+            "node": "CriarPasta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RedatorVideo",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CriarPasta": {
+      "main": [
+        [
+          {
+            "node": "FiltroVideo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FiltroLinkedin",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FiltroInstagram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FiltroTwitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FiltroNewsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RedatorVideo": {
+      "main": [
+        [
+          {
+            "node": "DriveVideo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RedatorLinkedin",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RedatorLinkedin": {
+      "main": [
+        [
+          {
+            "node": "DriveLinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RedatorInstagram",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RedatorInstagram": {
+      "main": [
+        [
+          {
+            "node": "DriveInstagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RedatorTwitter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RedatorTwitter": {
+      "main": [
+        [
+          {
+            "node": "DriveTwitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser5": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "RedatorNewsletter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RedatorNewsletter": {
+      "main": [
+        [
+          {
+            "node": "DriveNewsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ExtrairDados",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "SintetizarPesquisa",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "DiretorCriativo",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "RedatorVideo",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "RedatorLinkedin",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "RedatorInstagram",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "RedatorTwitter",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "RedatorNewsletter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FiltroVideo": {
+      "main": [
+        [
+          {
+            "node": "RedatorVideo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FiltroLinkedin": {
+      "main": [
+        [
+          {
+            "node": "RedatorLinkedin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FiltroInstagram": {
+      "main": [
+        [
+          {
+            "node": "RedatorInstagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FiltroTwitter": {
+      "main": [
+        [
+          {
+            "node": "RedatorTwitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FiltroNewsletter": {
+      "main": [
+        [
+          {
+            "node": "RedatorNewsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DriveVideo": {
+      "main": [
+        [
+          {
+            "node": "MontarRespostaVideo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MontarRespostaVideo": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DriveLinkedIn": {
+      "main": [
+        [
+          {
+            "node": "MontarRespostaLinkedin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MontarRespostaLinkedin": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DriveInstagram": {
+      "main": [
+        [
+          {
+            "node": "MontarRespostaInstagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MontarRespostaInstagram": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DriveTwitter": {
+      "main": [
+        [
+          {
+            "node": "MontarRespostaTwitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MontarRespostaTwitter": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DriveNewsletter": {
+      "main": [
+        [
+          {
+            "node": "MontarRespostaNewsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MontarRespostaNewsletter": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8152b150-2dca-498e-8523-7ec7fccec887",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "SEU_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "ZbK7QKNa59KBZ3ss",
+  "tags": []
+}
