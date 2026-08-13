@@ -1,0 +1,406 @@
+{
+  "name": "Automação Feedback Consultoria",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "abdf4443-d44e-44b4-8592-930b1f1df8bb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/12Bb74yUViM1ilQ2Lboslgy8bW7JdkFMYTh4-uJYrTyk/edit?resourcekey=&gid=126858288#gid=126858288",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 126858288,
+          "mode": "list",
+          "cachedResultName": "Consultores",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12Bb74yUViM1ilQ2Lboslgy8bW7JdkFMYTh4-uJYrTyk/edit#gid=126858288"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0f8b3b97-9f7b-4e17-943b-3201087730cd",
+      "name": "Panilha_consultores",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/12Bb74yUViM1ilQ2Lboslgy8bW7JdkFMYTh4-uJYrTyk/edit?resourcekey=&gid=732700877#gid=732700877",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 732700877,
+          "mode": "list",
+          "cachedResultName": "Respostas ao formulário 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12Bb74yUViM1ilQ2Lboslgy8bW7JdkFMYTh4-uJYrTyk/edit#gid=732700877"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Por qual consultor você foi atendido?",
+              "lookupValue": "={{ $json.Nome }}"
+            },
+            {
+              "lookupColumn": "Data",
+              "lookupValue": "={{ $now.format('dd/MM/yyyy') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        16
+      ],
+      "id": "a1d499c6-8592-43a5-8a8a-7944b5c79e63",
+      "name": "Planilha_respostas",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "55e20067-ede7-41c7-aeb8-a666e4676e5d",
+              "name": "data",
+              "value": "={{ $json.Data }}",
+              "type": "string"
+            },
+            {
+              "id": "9e922457-29f5-4565-98f1-6f0ea22ddd0a",
+              "name": "cliente",
+              "value": "={{ $json['Nome Completo'] }}",
+              "type": "string"
+            },
+            {
+              "id": "14fdc215-dc2a-43da-8538-c6ba255a8121",
+              "name": "consultor",
+              "value": "={{ $json['Por qual consultor você foi atendido?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "8720ae54-eee6-4827-9cc0-c853ff83db72",
+              "name": "objetivo",
+              "value": "={{ $json['Qual foi o principal objetivo da consultoria?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "d4c4ac48-8d86-4099-bd4e-dcd7ed063e1b",
+              "name": "satisfacao",
+              "value": "={{ $json['Em uma escala de 1 a 10,quão satisfeito(a) você ficou com a experiência geral da consultoria de hoje?'] }}",
+              "type": "number"
+            },
+            {
+              "id": "f8ee51fa-aa67-46e7-b3c1-540f37dbf1a0",
+              "name": "performance_conhecimento",
+              "value": "={{ $json['Avalie a performance do consultor nos seguintes aspectos: [Conhecimento Técnico e Expertise]'] }}",
+              "type": "string"
+            },
+            {
+              "id": "2de7f009-bc34-44c3-b08d-6d970add0313",
+              "name": "performance_negocio",
+              "value": "={{ $json['Avalie a performance do consultor nos seguintes aspectos: [Capacidade de Entender as Necessidades do Negócio]'] }}",
+              "type": "string"
+            },
+            {
+              "id": "35a49067-ea23-4d25-a3fe-523d0f3145c8",
+              "name": "performance_proatividade",
+              "value": "={{ $json['Avalie a performance do consultor nos seguintes aspectos: [Proatividade e Sugestão de Soluções Relevantes]'] }}",
+              "type": "string"
+            },
+            {
+              "id": "53f048c3-365f-46a1-b586-aadc2003f082",
+              "name": "frequencia_recomendacao",
+              "value": "={{ $json['Com que frequência você recomendaria este consultor a outras empresas?'] }}",
+              "type": "string"
+            },
+            {
+              "id": "fdc917af-2960-4fb0-92ba-1f508e3f259b",
+              "name": "sugestoes_melhorias",
+              "value": "={{ $json['Se houver, quais são as sugestões de melhoria para futuras consultorias?'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        16
+      ],
+      "id": "369f4c02-0200-4722-bb6b-68ea7276c5ac",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "22137aa7-953b-4ffc-a3ab-97b98e1d3312",
+      "name": "LoopConsultores"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "average",
+              "field": "satisfacao"
+            },
+            {
+              "aggregation": "concatenate",
+              "field": "sugestoes_melhorias",
+              "separateBy": "other",
+              "customSeparator": "=;\n\nPRÓXIMA SUGESTÃO:"
+            },
+            {
+              "field": "cliente"
+            }
+          ]
+        },
+        "options": {
+          "outputFormat": "singleItem"
+        }
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1056,
+        16
+      ],
+      "id": "8c692278-5b0e-4a0e-afd3-3d76cc7146bb",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c02c747f-6726-45d4-badc-95b2be3e58dd",
+              "leftValue": "={{ $json.average_satisfacao }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        16
+      ],
+      "id": "1540407e-7dd5-4370-b461-1135f889f084",
+      "name": "Media<7?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Nome do Consultor: {{ $('LoopConsultores').item.json.Nome }}\n\nMédia do Dia: {{ $('Summarize').item.json.average_satisfacao.round(2) }}\n\nTotal de Avaliações: {{ $json.count_cliente }}\n\nSugestões de Melhorias: {{ $('Summarize').item.json.concatenated_sugestoes_melhorias }} ",
+        "options": {
+          "systemMessage": "Você é um Supervisor de Qualidade analisando o desempenho de um consultor de \nmarketing. \nObjetivo: escrever um e-mail de feedback construtivo, já que a média do dia \nficou ABAIXO da meta (nota < 7). \n## INSTRUCÕES DE ANÁLISE \n1. Sintetize: não liste cada comentário individualmente. Se houver 10 \ncomentários sobre \"atraso\", agrupe em um único ponto. \n2. Identifique temas principais (clareza, pontualidade, empatia, domínio \ntécnico, proatividade). \n3. Se a lista estiver vazia ou irrelevante (\"não\", \"ok\"), assuma que faltou \nconexão com o cliente e oriente sobre proatividade. \n4. Tom: profissional, direto, focado em mentoria (não punição). \n## FORMATO DE SAÍDA \nRetorne APENAS o HTML do corpo do e-mail (sem tags html/head ou crases). \nUse: - p para parágrafos - b para destaques - ul e li para listar pontos de melhoria \n## ESTRUTURA DO CONTEÚDO \n1. Saudação chamando o consultor pelo nome (use o nome que vem no prompt) \n2. Contexto sobre a nota do dia abaixo da meta \n3. Resumo geral do sentimento dos clientes (visão macro) \n4. Lista com os principais pontos de fricção agrupados por tema \n5. Recomendação prática e acionável para a próxima consultoria \n6. Mencionar que a planilha em anexo contém todas as avaliações do dia \n7. Encerramento empático e motivador \nNUNCA use quebra de linha textual. Sempre HTML."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1472,
+        -80
+      ],
+      "id": "4839a6c0-9357-494e-8197-e0256eacbdf5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        128
+      ],
+      "id": "94c6b0cc-9019-4e18-84df-f77782c11837",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Panilha_consultores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Panilha_consultores": {
+      "main": [
+        [
+          {
+            "node": "LoopConsultores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planilha_respostas": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LoopConsultores": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Planilha_respostas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Media<7?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Media<7?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LoopConsultores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6a1bc3f0-5aa6-4e64-927c-5b12687d9f21",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "SEU_INSTANCE_ID"
+  },
+  "id": "x1v8UQXXdVcrApeZ",
+  "tags": []
+}
