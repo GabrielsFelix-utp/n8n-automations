@@ -1,0 +1,1246 @@
+{
+  "name": "Pipeline de Análise com IA",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "sender": "neuroworkassistencia@gmail.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        96
+      ],
+      "id": "9eca9b85-6937-4edf-912a-0e9e893eea3f",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=Assunto:{{ $json.assunto }}\nCliente: {{ $json.nome }} - {{ $json.email }}\n\nCorpo do Email:\n{{ $json.texto }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "nome_cliente",
+              "description": "Nome do Cliente"
+            },
+            {
+              "name": "item_mencionado",
+              "description": "Produto ou serviço informado no email. Caso não encontrado, informar \"Não especificado\""
+            },
+            {
+              "name": "ponto_principal",
+              "description": "PrincinaL problema, objetivo, sugestão, reclamação. Em uma frase objetiva."
+            },
+            {
+              "name": "urgente",
+              "type": "boolean",
+              "description": "Indica se é uma mensagem urgente ou não.",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        96
+      ],
+      "id": "2c17efe5-543f-468a-95e5-97048f9f1059",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        528,
+        320
+      ],
+      "id": "4b976530-0ccd-4da8-b924-653ec7943a79",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d35acd4b-bbff-4818-a926-bb70dd674fb3",
+              "leftValue": "={{ $json.output.urgente }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        96
+      ],
+      "id": "1f33c4ea-ac85-44da-9ead-e956afbac5fe",
+      "name": "Urgente?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U0BFRH9C9N2",
+          "mode": "list",
+          "cachedResultName": "gabrielfelixsilva674"
+        },
+        "text": "=*FEEDBACK URGENTE RECEBIDO*\n\nCliente: {{ $json.output.nome_cliente }}\nItem Mencionado: {{ $json.output.item_mencionado }}\n\nPonto Principal: {{ $json.output.ponto_principal }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1088,
+        -16
+      ],
+      "id": "d640f186-4cd2-4cda-a1b6-3f8bde8d6ab5",
+      "name": "EnviarUrgencia",
+      "webhookId": "2567f336-0dcf-4ac2-971d-7f8b10cc1d96",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2892c23-aa47-478b-9f01-749b408a213b",
+              "name": "nome",
+              "value": "={{ $json.from.value[0].name }}",
+              "type": "string"
+            },
+            {
+              "id": "91687d0a-e8ff-45b1-a026-2c4c1dd754ba",
+              "name": "email",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "1802d1cf-421e-4adb-9d3a-790f0274280f",
+              "name": "assunto",
+              "value": "={{ $json.headers.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "14c6fdf7-0435-4bae-a211-17c0b1432f82",
+              "name": "texto",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        96
+      ],
+      "id": "ecf0610f-4544-4925-af3d-478248ee1908",
+      "name": "BuscarDados"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $('BuscarDados').item.json.texto }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "bug",
+              "description": "Problemas Técnicos. Quando o cliente relata alguma falha no produto, como botões, falhas, defeito."
+            },
+            {
+              "category": "Reclamação",
+              "description": "Insatisfação geral. Quando o cliente solicita reembolso ou demonstra estar insatisfeito com o produto."
+            },
+            {
+              "category": "sugestao",
+              "description": "Ideias de Melhorias"
+            },
+            {
+              "category": "Elogio",
+              "description": "Feedback positivo"
+            }
+          ]
+        },
+        "options": {
+          "fallback": "other"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        1376,
+        192
+      ],
+      "id": "e0f3bd09-8ea8-4fa9-ab7f-d92de6c8d47a",
+      "name": "CategorizarTexto"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $('BuscarDados').item.json.texto }}",
+        "options": {
+          "includeDetailedResults": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.sentimentAnalysis",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "3fe16fab-94a0-4846-a4ec-19ad415adece",
+      "name": "AnaliseSentimento"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BGWUG892L",
+          "mode": "list",
+          "cachedResultName": "fb-bugs"
+        },
+        "text": "=*Novo Bug Reportado!!!*\n\n*Cliente:* {{ $('Information Extractor').item.json.output.nome_cliente }}\n*Item mencionado: *{{ $json.output.item_mencionado }}\n\n*Problema: *{{ $('Information Extractor').item.json.output.ponto_principal }}\n\nAlguém poderia investigar?",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1952,
+        -192
+      ],
+      "id": "26e4b7db-ef25-4cc3-b5ed-0bca40d6d6e5",
+      "name": "EnviarBug",
+      "webhookId": "7ebf909d-19dc-473f-b3f1-c99c1b49ae81",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d327d5b6-6e77-45bf-b246-2730a2bfb892",
+              "name": "categoria",
+              "value": "bug",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        -192
+      ],
+      "id": "11d45e8c-971b-4797-b9ba-d91dd7f899a3",
+      "name": "CategoriaBug"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BFZA2SK9B",
+          "mode": "list",
+          "cachedResultName": "fb-reclamacoes"
+        },
+        "text": "=*Nova Relcamação Relatada*\n\n*Cliente:* {{ $('Information Extractor').item.json.output.nome_cliente }}\n*Item mencionado:* {{ $json.output.item_mencionado }}\n\n*Resumo da Reclamação:* {{ $('Information Extractor').item.json.output.ponto_principal }}\n\nPor gentileza\nResponsável pelo cliente, entre em contato!",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1728,
+        0
+      ],
+      "id": "8d57084c-8590-4b31-a7ee-758d352b3a53",
+      "name": "EnviarReclamação",
+      "webhookId": "7ebf909d-19dc-473f-b3f1-c99c1b49ae81",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d327d5b6-6e77-45bf-b246-2730a2bfb892",
+              "name": "categoria",
+              "value": "reclamacao",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        0
+      ],
+      "id": "20465dcc-627e-45eb-8c25-201e4207b5fe",
+      "name": "CategoriaReclamacao"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BG6AYM7L4",
+          "mode": "list",
+          "cachedResultName": "fb-sugesto3s"
+        },
+        "text": "=*Nova Sugestão de um Cliente!*\n\n*Cliente:* {{ $('Information Extractor').item.json.output.nome_cliente }}\n*Sobre: *{{ $json.output.item_mencionado }}\n\n*Sugestão: *{{ $('Information Extractor').item.json.output.ponto_principal }}\n\nRegistrar para analisarmos em time mais tarde!",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1952,
+        192
+      ],
+      "id": "5aca87f8-d98c-4684-9273-67145b1c7bd5",
+      "name": "EnviarSugestão",
+      "webhookId": "7ebf909d-19dc-473f-b3f1-c99c1b49ae81",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BFWBQ93SP",
+          "mode": "list",
+          "cachedResultName": "fb-elogios"
+        },
+        "text": "=*Recebemos um Novo Elogio!*\n\n*Cliente:* {{ $('Information Extractor').item.json.output.nome_cliente }}\n\n*Produto ou Serviço:* {{ $json.output.item_mencionado }}\n\n*Comentário:* {{ $('Information Extractor').item.json.output.ponto_principal }}\n\nVamos compartilhar com nosso Time!!",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1728,
+        384
+      ],
+      "id": "61fb3d9c-7324-4d97-8ab1-3a6a00921e9a",
+      "name": "EnviarElogio",
+      "webhookId": "7ebf909d-19dc-473f-b3f1-c99c1b49ae81",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d327d5b6-6e77-45bf-b246-2730a2bfb892",
+              "name": "categoria",
+              "value": "Elogio",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        384
+      ],
+      "id": "af2c5ed2-44e8-480e-90ea-0b8b71a4515a",
+      "name": "CategoriaElogio"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "=<p>Olá {{ $('AnaliseSentimento').item.json.output.nome_cliente }},</p>\n\n<p>Recebemos seu feedback sobre <b>{{ $('AnaliseSentimento').item.json.output.item_mencionado }}</b> e queremos te dizer que lemos com atenção.</p>\n\n<p>Em até 24h, um funcionário de nosso time entrará em contato.</p>\n\n<p>Atenciosamente, <br>Equipe Mercatto</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Equipe Mercatto"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        0
+      ],
+      "id": "c9e3a428-6133-4ac2-aa36-4567d53e23b0",
+      "name": "ResponderReclamação",
+      "webhookId": "1e1ac53b-9068-4302-9bfb-a9a47c312768",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "=<p>Olá {{ $('AnaliseSentimento').item.json.output.nome_cliente }},</p>\n\n<p>Que alegria lermos seu feedback sobre <b>{{ $('AnaliseSentimento').item.json.output.item_mencionado }}</b> !!</p>\n\n<p>Adoraríamos usar seu comentário em nossos materiais de divulgação nas redes sociais, você nos autoriza?</p>\n\n<p>Só precisa responder \"Sim\" ou \"Não\".</p>\n\n\n<p>Muito Obrigado, <br>Equipe Mercatto</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Equipe Mercatto"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        384
+      ],
+      "id": "c05d3993-60ea-41bb-9476-961b0fe0514e",
+      "name": "ResponderElogio",
+      "webhookId": "1e1ac53b-9068-4302-9bfb-a9a47c312768",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U0BFRH9C9N2",
+          "mode": "list",
+          "cachedResultName": "gabrielfelixsilva674"
+        },
+        "text": "=*Feedback precisando de Revisão!!*\n\n*Cliente:* {{ $('Information Extractor').item.json.output.nome_cliente }}\n\n*Assunto:* {{ $('Information Extractor').item.json.output.ponto_principal }}\n\n*Corpo do Email:* {{ $('BuscarDados').item.json.texto }}\n\nQual tipo de Categoria este feedback pertence?",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1952,
+        576
+      ],
+      "id": "d3babf87-7a18-4e68-a144-388127e9bdb9",
+      "name": "Fallback",
+      "webhookId": "7ebf909d-19dc-473f-b3f1-c99c1b49ae81",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d327d5b6-6e77-45bf-b246-2730a2bfb892",
+              "name": "categoria",
+              "value": "outro",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        576
+      ],
+      "id": "b9d6a2e3-ea33-4f31-9662-7f2f4ed132ef",
+      "name": "CategoriaOutro"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d327d5b6-6e77-45bf-b246-2730a2bfb892",
+              "name": "categoria",
+              "value": "sugestao",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2176,
+        192
+      ],
+      "id": "e9dc48ff-3c52-499c-8547-85c755fdd756",
+      "name": "CategoriaSugestao"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d2d1e19-d751-40fa-9e01-257a35802692",
+              "name": "nome_cliente",
+              "value": "={{ $('Information Extractor').item.json.output.nome_cliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2312ef4b-a49c-49c8-9e17-69a95496f17a",
+              "name": "item_mencionado",
+              "value": "={{ $('Information Extractor').item.json.output.item_mencionado }}",
+              "type": "string"
+            },
+            {
+              "id": "8669a926-1218-41a8-ae4b-a06e29b300e6",
+              "name": "ponto_principal",
+              "value": "={{ $('Information Extractor').item.json.output.ponto_principal }}",
+              "type": "string"
+            },
+            {
+              "id": "7ee0b307-2c06-4cea-b823-6efeee1e5b12",
+              "name": "urgencia",
+              "value": "={{ $('Information Extractor').item.json.output.urgente }}",
+              "type": "boolean"
+            },
+            {
+              "id": "8dca3529-06df-4329-9c25-a854780d4a2a",
+              "name": "sentimento",
+              "value": "={{ $('AnaliseSentimento').item.json.sentimentAnalysis.category }}",
+              "type": "object"
+            },
+            {
+              "id": "695d22c2-9148-4f25-bc08-d4b090a2d9f5",
+              "name": "categoria",
+              "value": "={{ $json.categoria }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2528,
+        192
+      ],
+      "id": "0659a3f0-959f-4eef-bb5c-ff15da00cada",
+      "name": "Categoria"
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "summarizationMethod": "stuff",
+              "prompt": "Escreva um resumo conciso em PT-BR de no máximo 20 palavras.\n\n\n\n\nResumo Conciso: \n\n\n"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2.1,
+      "position": [
+        2736,
+        192
+      ],
+      "id": "5dc8a271-f50c-4eac-9f87-a1ed08410774",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM",
+          "mode": "list",
+          "cachedResultName": "Feedbacks Slack",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "cliente ": "={{ $('Categoria').item.json.nome_cliente }}",
+            "problema ": "={{ $('Categoria').item.json.ponto_principal }}",
+            "sentimento": "={{ $('Categoria').item.json.sentimento }}",
+            "categoria": "={{ $('Categoria').item.json.categoria }}",
+            "resumo": "={{ $json.output }}",
+            "data": "={{ $today.format('dd/MM/yyyy') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cliente ",
+              "displayName": "cliente ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "problema ",
+              "displayName": "problema ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentimento",
+              "displayName": "sentimento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumo",
+              "displayName": "resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3088,
+        192
+      ],
+      "id": "f133175b-9b03-494b-9cf9-1ea096bed38d",
+      "name": "RegistrarFeedback",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 6,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        928
+      ],
+      "id": "f9479d69-54fb-4aec-b729-dfd4f6b7943d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM",
+          "mode": "list",
+          "cachedResultName": "Feedbacks Slack",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tla9Y9NsJX-P_nQJVpc-0HrreUTdNSyKMBPKOL92CCM/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "data",
+              "lookupValue": "={{ $today.format('dd/MM/yyyy') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        928
+      ],
+      "id": "a85d4011-a4de-4225-97c1-0184f97262ea",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Feedbacks de Hoje:\n{{ JSON.stringify ($input.all(), null, 2) }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é um especialista de feedback. Gere um breafing executivo em HTML para o CEO sobre os feedbacks de hoje.\n\nUse tags HTML simples (h1, h2, p, ul, li, b, i). Inclua: Título com data, resumo do dia (Total + Sentimentos + Categorias), casos urgentes, destaques e uma recomendação acionável.\n\nRetorne apenas o HTML, sem blocos de código, sem markdown, ```html."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        928
+      ],
+      "id": "48347f51-8be6-4145-a092-ebfc809ddc00",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        1248
+      ],
+      "id": "c8da3c09-3f96-444b-b0dd-d510fd7bcc2d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "seuemail@exemplo.com",
+        "subject": "Relatório Semanal de Feedbacks",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        928
+      ],
+      "id": "f38b5dc7-ba93-479a-b52a-69a63306b5b3",
+      "name": "Send a message",
+      "webhookId": "435aeced-6bcc-4020-ad02-7169a447c230",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "BuscarDados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AnaliseSentimento",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "CategorizarTexto",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Urgente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Urgente?": {
+      "main": [
+        [
+          {
+            "node": "EnviarUrgencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AnaliseSentimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EnviarUrgencia": {
+      "main": [
+        []
+      ]
+    },
+    "BuscarDados": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategorizarTexto": {
+      "main": [
+        [
+          {
+            "node": "EnviarBug",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "EnviarReclamação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "EnviarSugestão",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "EnviarElogio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AnaliseSentimento": {
+      "main": [
+        [
+          {
+            "node": "CategorizarTexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CategorizarTexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CategorizarTexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EnviarBug": {
+      "main": [
+        [
+          {
+            "node": "CategoriaBug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EnviarReclamação": {
+      "main": [
+        [
+          {
+            "node": "ResponderReclamação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EnviarSugestão": {
+      "main": [
+        [
+          {
+            "node": "CategoriaSugestao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "EnviarElogio": {
+      "main": [
+        [
+          {
+            "node": "ResponderElogio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ResponderReclamação": {
+      "main": [
+        [
+          {
+            "node": "CategoriaReclamacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ResponderElogio": {
+      "main": [
+        [
+          {
+            "node": "CategoriaElogio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback": {
+      "main": [
+        [
+          {
+            "node": "CategoriaOutro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategoriaBug": {
+      "main": [
+        [
+          {
+            "node": "Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategoriaReclamacao": {
+      "main": [
+        [
+          {
+            "node": "Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategoriaSugestao": {
+      "main": [
+        [
+          {
+            "node": "Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategoriaElogio": {
+      "main": [
+        [
+          {
+            "node": "Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CategoriaOutro": {
+      "main": [
+        [
+          {
+            "node": "Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categoria": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "RegistrarFeedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f44f626c-c0a9-4b0e-b96f-64bf9ebe0d71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "SEU_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "Ng7UyOWysuvOseAS",
+  "tags": []
+}
