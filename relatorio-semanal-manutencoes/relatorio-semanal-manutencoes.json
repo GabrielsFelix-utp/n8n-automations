@@ -1,0 +1,349 @@
+{
+  "name": "Relatório Semanal de Manutenções",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                2
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        128,
+        -144
+      ],
+      "id": "8f310995-1634-4714-a677-a3dfd9938e48",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "80c8bf2d-31ec-40e4-ac35-493b75ea75fd",
+              "name": "cliente",
+              "value": "={{ $json.Cliente }}",
+              "type": "string"
+            },
+            {
+              "id": "cba5d612-a34e-40e6-8a35-ffe01c666fcd",
+              "name": "produto",
+              "value": "={{ $json.Produto }}",
+              "type": "string"
+            },
+            {
+              "id": "75920e16-5c2d-4d08-90ba-47537c6aaa9c",
+              "name": "procedimento",
+              "value": "={{ $json['Problema Detectado'] }}",
+              "type": "string"
+            },
+            {
+              "id": "661c71b8-ee75-494f-941e-e47ec594cf45",
+              "name": "chegada",
+              "value": "={{ $json.Chegada }}",
+              "type": "string"
+            },
+            {
+              "id": "78ac8a5a-b5f3-42a8-bedd-c93eaaa73d66",
+              "name": "previsao_conclusao",
+              "value": "={{ $json['Previsão de Conclusão do Reparo'] }}",
+              "type": "string"
+            },
+            {
+              "id": "28c93314-6455-4d85-9325-abb234217345",
+              "name": "status",
+              "value": "={{ $json.STATUS }}",
+              "type": "string"
+            },
+            {
+              "id": "bc9ddb77-eb33-4f1d-bf7e-8c6849f455fe",
+              "name": "descricao",
+              "value": "={{ $json['Descrição'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -144
+      ],
+      "id": "7c2847fd-c51b-42cf-bea5-e6f68259ffa2",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74c48ffc-327a-4b82-a850-d8841b7f4d09",
+              "name": "dias_prazo",
+              "value": "={{ DateTime.fromFormat($json.previsao_conclusao, \"dd/MM/yyyy\").diffTo($today, 'days') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ true }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        -144
+      ],
+      "id": "5402921c-9cd8-4822-ab58-f633a03e253e",
+      "name": "CalcularPrazo"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "15e46a06-9a58-4c4b-9e8c-ea92ebb16463",
+              "name": "situacao",
+              "value": "={{ \n$json.dias_prazo < 0 ? \"atrasado\" :\n$json.dias_prazo <= 3 ? \"em_risco\": \"no_prazo\"\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        -144
+      ],
+      "id": "f051c37b-2cc7-4e72-bcd9-c81c2df89365",
+      "name": "CalcularSituação"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "projetos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1136,
+        -144
+      ],
+      "id": "ae91edb1-3c5e-4757-bad2-cbd11d5a33ef",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Hoje é  {{ $today.format('dd/MM/yyyy') }}\n\nProjetos ativos na agência:\n{{ JSON.stringify($json.projetos, null, 2) }}",
+        "options": {
+          "systemMessage": "=Você é o assistente do gestor de uma empresa de tecnologias voltada para saúde e educação. Toda terça-feira de manhã você envia para o gestor um briefing \nda planilha de manutenções dos equipamentos direto no Outlook email, ajudando ele a saber em 30 segundos o que \nfazer essa semana. \n## REGRA OURO \nO gestor vai ler isso no computador. Cada palavra precisa valer ouro. Sem \nenrolação, sem dados crus, sem listar todos os projetos. Só o que importa. \n## ESTRUTURA OBRIGATORIA DA RESPOSTA \nUse formatação HTML compatível com Outlook:\n\n<b>texto</b> para negrito.\n<br> para quebra de linha.\n<ul><li>...</li></ul> para listas com marcadores.\nEmojis com moderação (no máximo 1 por seção).\nNão utilize Markdown (**, *, #, -, etc.).\nRetorne apenas o corpo do e-mail em HTML, sem adicionar <html>, <head> ou <body>, salvo se solicitado.\n\n<b>Relatório Semanal — [dia, data]</b><br><br>\n\n<b>Visão geral:</b> [1 frase com números gerais: total de manutenções sem conclusão, quantos em alerta]<br><br>\n\n🚨 <b>Atrasos críticos:</b>\n<ul>\n  <li><b>[Manutenção Cliente]</b> — [motivo curto e direto, ex: manutenção atrasada em 2 dias, status atrasado]</li>\n  <li><b>[Manutenção Cliente]</b> — [continuar para cada manutenção atrasada]</li>\n</ul>\n\n⚠️ <b>Aviso de Prazo:</b>\n<ul>\n  <li><b>[Manutenção Cliente]</b> — [motivo, ex: progresso lento, prazo próximo]</li>\n  <li><b>[Manutenção Cliente]</b> — [continuar para cada projeto em risco]</li>\n</ul>\n\n✅ <b>Indo bem:</b><br>\n[1 frase resumindo. Ex: 7 manutenções no prazo ou em teste, Manutenção Cliente perto da entrega.]<br><br>\n\n💡 <b>Recomendação da IA:</b><br>\n[1 frase clara e acionável sobre o que o gestor pode entender da situação de manutenções na empresa HOJE, baseado nos riscos.]\n\n📊 <b>Link Para Planilha:</b><br>\n[Informe em uma pequena frase que o link é para acessar a planilha de manutenções do setor de Assistência da Neurowork e encaminhe este link: https://docs.google.com/spreadsheets/d/1wGB7D-N9b33IV12l9U2p-bWn9Wg_xcDLNA9nhF4fmL8/edit?usp=sharing]\n\n## REGRAS - Utilize APENASHTML simples compatível com Outlook.\nPreserve a ordem das seções exatamente como definida.\nMantenha os emojis nas mesmas seções.\nNÃO utilize CSS, tabelas ou estilos inline, a menos que solicitado.\nRetorne somente o conteúdo do e-mail pronto para envio, sem explicações adicionais.\ninventar dados nem sugerir ações genéricas - Se não houver riscos críticos, omita a seção - Se não houver projetos em alerta, omita a seção \n- A recomendação deve ser ESPECÍFICA, citar nome do projeto/cliente - Tom: direto, executivo, como um colega experiente que já olhou os dados por \nvocê \n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1344,
+        -144
+      ],
+      "id": "d1ade73d-250d-4fed-8bad-0aebf4bde7ca",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1216,
+        64
+      ],
+      "id": "2d94a8b8-0056-4e89-9c83-576b04ab8fea",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1wGB7D-N9b33IV12l9U2p-bWn9Wg_xcDLNA9nhF4fmL8/edit?usp=drivesdk",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2139065922,
+          "mode": "list",
+          "cachedResultName": "Manutenção",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wGB7D-N9b33IV12l9U2p-bWn9Wg_xcDLNA9nhF4fmL8/edit#gid=2139065922"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        336,
+        -144
+      ],
+      "id": "f78d0117-df84-40ab-a725-bc1920df4f52",
+      "name": "BuscarPlanilha",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toRecipients": "gestor@empresa.com",
+        "subject": "Relatório Semanal de Manutenções",
+        "bodyContent": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        -144
+      ],
+      "id": "ae9783a8-7980-4bb8-ae5b-7e6a72d97384",
+      "name": "MensagemGestor",
+      "webhookId": "b698d33e-0ef6-4863-a4f2-a557d98e44f4",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "SUA_CREDENCIAL_AQUI",
+          "name": "SuaConta"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "BuscarPlanilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "CalcularPrazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalcularPrazo": {
+      "main": [
+        [
+          {
+            "node": "CalcularSituação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalcularSituação": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "MensagemGestor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuscarPlanilha": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "42ac158b-b95d-4196-ae91-2465deda7091",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "SEU_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "cFeyIA6bbchXJY0i",
+  "tags": []
+}
