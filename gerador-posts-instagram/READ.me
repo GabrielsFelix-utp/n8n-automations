@@ -1,1 +1,78 @@
+# Gerador de Posts para Instagram com n8n + IA
+
+Workflow de automação no **n8n** que transforma um simples tema, enviado por mensagem no Telegram, em posts de Instagram quase prontos: ideias, legenda, imagem hospedada e hashtags.
+
+> **Versão DEMO.** Este repositório contém uma versão de demonstração: prompts simplificados e limite de 1 post por execução. Veja a seção [Sobre esta versão](#sobre-esta-versão).
+
+![Visão geral do workflow](docs/workflow.png)
+
+## O que ele faz
+
+1. Você envia um tema para um bot no **Telegram** (ex.: "importância da alimentação equilibrada").
+2. Um agente de IA (**Google Gemini**) cria **5 ideias** de post, cada uma com título, subtítulo e hashtags.
+3. Cada ideia passa por um loop, em que um segundo agente escreve o **texto completo** do post.
+4. Uma **imagem minimalista, sem texto**, é gerada a partir da ideia via API do **Pollinations**.
+5. A imagem é enviada para um bucket público do **Supabase Storage**.
+6. No final, o fluxo entrega os campos `image_url`, `legenda` e `hashtags`, prontos para publicar.
+
+## Fluxo
+
+```mermaid
+flowchart LR
+  A["Telegram: tema"] --> B["Agente IA: 5 ideias"]
+  B --> C["Split Out"]
+  C --> D["Limite DEMO"]
+  D --> E["Loop Over Items"]
+  E --> F["Agente IA: texto do post"]
+  F --> G["Pollinations: imagem"]
+  G --> H["Supabase Storage"]
+  H --> I["image_url + legenda + hashtags"]
+  I --> E
+```
+
+## Para quem é útil
+
+- Social media e criadores de conteúdo que querem ganhar tempo na produção.
+- Pequenos negócios e profissionais liberais (nutrição, estética, educação, finanças) que precisam postar com frequência.
+- Quem quer estudar como combinar agentes de IA, loops e APIs no n8n.
+
+## Tecnologias
+
+n8n (Cloud ou self-hosted), Telegram Bot API, Google Gemini, Pollinations (imagens), Supabase Storage.
+
+## Como configurar
+
+1. Importe `workflows/Publicacao_Instagram_DEMO.json` no n8n (**Import from file**).
+2. **Telegram:** crie um bot com o @BotFather e adicione a credencial no nó *Telegram Trigger*.
+3. **Gemini:** crie uma API key no Google AI Studio e adicione a credencial nos dois nós *Google Gemini Chat Model*.
+4. **Pollinations:** gere uma chave gratuita em `enter.pollinations.ai` e substitua `COLE_AQUI_SUA_CHAVE_POLLINATIONS` na URL do nó *Gerar Imagem*.
+5. **Supabase:**
+   - crie um projeto e um bucket **público** chamado `PublicacaoNova`, com uma pasta `Imagens`;
+   - no nó *Enviando Item para o bucket*, troque `SEU-PROJETO` pelo ID do seu projeto e `COLE_AQUI_SUA_CHAVE_SUPABASE` pela chave `service_role` (nos headers `Authorization` e `apikey`). A chave do Supabase é diferente da do Pollinations.
+   - ajuste também o `SEU-PROJETO` no nó *Montar URL e Legenda*.
+6. Ative o workflow e envie um tema para o seu bot.
+
+> Nunca publique suas chaves. Prefira guardar as credenciais no gerenciador do n8n.
+
+## Sobre esta versão
+
+Esta é uma versão de demonstração do projeto. Ela funciona de ponta a ponta, mas:
+
+- os prompts dos agentes foram **simplificados** (a versão completa não é publicada);
+- o fluxo é limitado a **1 post por execução**;
+- a legenda gerada inclui uma linha de crédito ao repositório.
+
+## O que ainda dá para evoluir
+
+- Publicação automática no Instagram via API do Meta (exige conta profissional e app aprovado).
+- Etapa de aprovação por Telegram antes de publicar.
+- Agendamento de posts e geração de carrosséis.
+
+## Licença
+
+Uso **não comercial**. Consulte o arquivo [LICENSE](LICENSE). Para uso comercial, entre em contato.
+
+## Contato
+
+[GabrielsFelix-utp] - [gabrielfelixsilva674@gmail.com]
 
